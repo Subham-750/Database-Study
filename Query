@@ -1,5 +1,0 @@
---Find out those employees who are getting high salary than their manager
-select * from employees;
-select * from employees where email='DGRANT';
-
-
