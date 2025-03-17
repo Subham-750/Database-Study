@@ -1,3 +1,0 @@
---My query
-select * from employees where email='DGRANT';
-select * from employees where email='MMARTINE';
