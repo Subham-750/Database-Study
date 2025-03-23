@@ -55,6 +55,6 @@ delete from delete_truncate_slow_test;
 /*I applied Truncate after delete which takes 0.3 seconds which is faster than delete and also 
 it removes the watermark, means it recliam the space that is used by table.*/
 truncate table DELETE_TRUNCATE_SLOW_TEST;
---Q1 End Here
+--------Q1 End Here
 
 
