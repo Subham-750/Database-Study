@@ -1,6 +1,6 @@
 --------------------------------------------------------------PLSQL Practice--------------------------------------------------------------
 /*Q1. Difference between Delete and truncate proving some points*/
---Triggers will get fired while applying delete. Triggers will not get fired in truncate. To Prove this below is the code
+--Pont1:Triggers will get fired while applying delete. Triggers will not get fired in truncate. To Prove this below is the code
 
 --Loop to insert some records in table
 set SERVEROUTPUT on;
@@ -26,8 +26,7 @@ delete from tb1;
 --Trigger doesnt fire hence its prove that truncate doesnt raise trigger
 TRUNCATE TABLE tb1;
 
---Now we are moving to second point
---Delete is slower as compaired to truncate and delete contains water mark but truncate not lets prove this
+--Point2: Delete is slower as compaired to truncate and delete contains watermark but truncate doesnt lets prove this
 --I have created this table for test
 create table delete_truncate_slow_test
 (
@@ -55,6 +54,31 @@ delete from delete_truncate_slow_test;
 /*I applied Truncate after delete which takes 0.3 seconds which is faster than delete and also 
 it removes the watermark, means it recliam the space that is used by table.*/
 truncate table DELETE_TRUNCATE_SLOW_TEST;
+
+--Point3: Proving how truncate table tb_name cascade works
+--First i created Two table and inserted data
+CREATE TABLE CHILD_TABLE  ("CHILD_ID" NUMBER,"PARENT_ID" NUMBER,"DESCRIPTION" VARCHAR2(100), 
+CONSTRAINT "FK_CHILD" FOREIGN KEY ("CHILD_ID") REFERENCES "PARENT_TABLE" ("PARENT_ID") ON DELETE CASCADE ENABLE );
+INSERT INTO CHILD_TABLE (CHILD_ID, PARENT_ID, DESCRIPTION) VALUES (101, 101, 'Root Category');
+INSERT INTO CHILD_TABLE (CHILD_ID, PARENT_ID, DESCRIPTION) VALUES (102, 102, 'Sub Category A');
+INSERT INTO CHILD_TABLE (CHILD_ID, PARENT_ID, DESCRIPTION) VALUES (103, 103, 'Sub Category B');
+INSERT INTO CHILD_TABLE (CHILD_ID, PARENT_ID, DESCRIPTION) VALUES (104, 104, 'Sub Category A1');
+INSERT INTO CHILD_TABLE (CHILD_ID, PARENT_ID, DESCRIPTION) VALUES (105, 105, 'Sub Category A2');
+INSERT INTO CHILD_TABLE (CHILD_ID, PARENT_ID, DESCRIPTION) VALUES (106, 106, 'Sub Category B1');
+INSERT INTO CHILD_TABLE (CHILD_ID, PARENT_ID, DESCRIPTION) VALUES (107, 107, 'Sub Category B2');
+
+CREATE TABLE PARENT_TABLE("PARENT_ID" NUMBER,"NAME" VARCHAR2(50),PRIMARY KEY ("PARENT_ID"));
+INSERT INTO PARENT_TABLE (PARENT_ID, NAME) VALUES (101, 'Item 1');
+INSERT INTO PARENT_TABLE (PARENT_ID, NAME) VALUES (102, 'Item 2');
+INSERT INTO PARENT_TABLE (PARENT_ID, NAME) VALUES (103, 'Item 3');
+INSERT INTO PARENT_TABLE (PARENT_ID, NAME) VALUES (104, 'Item 4');
+INSERT INTO PARENT_TABLE (PARENT_ID, NAME) VALUES (105, 'Item 5');
+INSERT INTO PARENT_TABLE (PARENT_ID, NAME) VALUES (106, 'Item 6');
+INSERT INTO PARENT_TABLE (PARENT_ID, NAME) VALUES (107, 'Item 7');
+
+/*In this parent table if i apply delete command on parent table the asociated data in child table will get deleted
+in the same way if i apply truncate table tb_name cascade then it will truncate both of the table*/
+truncate table PARENT_TABLE cascade;
 --------Q1 End Here
 
 
