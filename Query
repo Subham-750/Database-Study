@@ -1,7 +1,7 @@
 --------------------------------------------------------------PLSQL Practice--------------------------------------------------------------
 /*Q1. Difference between Delete and truncate proving some points*/
 --Triggers will get fired while applying delete. Triggers will not get fired in truncate. To Prove this below is the code
-select * from tb1;
+
 --Loop to insert some records in table
 set SERVEROUTPUT on;
 declare 
@@ -12,14 +12,17 @@ BEGIN
     insert into tb1 values(v_count);
     end loop;
 end;    
+
 --This raise the error if we execute delete command
 create or replace trigger tr_delete
 before delete on tb1 for EACH ROW
 BEGIN
     raise_application_error(-20000,'Trigger is fired');
 end;
+
 --When we execute delete the trigger got raise hence its prove that trigger gets fire when we execute delete
 delete from tb1;
+
 --Trigger doesnt fire hence its prove that truncate doesnt raise trigger
 TRUNCATE TABLE tb1;
 
@@ -31,19 +34,24 @@ create table delete_truncate_slow_test
     function_name VARCHAR2(100),
     Apply_status VARCHAR2(100)
 ); 
+
 --I check the size of the table which is 0.0 MB
 SELECT segment_name , bytes/1024/1024 AS size_mb
 FROM user_segments
 WHERE segment_name = 'DELETE_TRUNCATE_SLOW_TEST';
+
 --Inserted 8 million records in table
 INSERT into delete_truncate_slow_test select 'Delete','Yes' from dual connect by level<=1000000;
+
 -- Check the size of the table which is 143 MB
 SELECT segment_name , bytes/1024/1024 AS size_mb
 FROM user_segments
 WHERE segment_name = 'DELETE_TRUNCATE_SLOW_TEST';
+
 /*Now i applied delete which took me 5 sec move the records from original table to undo space and commit but 
 still i can see the table space which is still showing 143 MB that means it contains the watermark also*/
 delete from delete_truncate_slow_test;
+
 /*I applied Truncate after delete which takes 0.3 seconds which is faster than delete and also 
 it removes the watermark, means it recliam the space that is used by table.*/
 truncate table DELETE_TRUNCATE_SLOW_TEST;
