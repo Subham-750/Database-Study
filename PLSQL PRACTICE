@@ -81,4 +81,8 @@ in the same way if i apply truncate table tb_name cascade then it will truncate 
 truncate table PARENT_TABLE cascade;
 --------Q1 End Here
 
+/*Q2.Difference between procedure and function*/
+--Point1: We use out parameter in procedure to return a value and inside a function we use return keyword to return a value.
+
+
 
