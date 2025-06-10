@@ -192,14 +192,10 @@ BEGIN
     COMMIT;
   END;
 END;
-/
-
-
-/*Note: Can a function compile without a return keyword?
+/*
+Note: Can a function compile without a return keyword?
 Yes a function can be compile witout a return keyword but cant be call from a select statement.
 */
-
-
 ---------Q2 END----------------
 
 
