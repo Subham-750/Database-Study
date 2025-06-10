@@ -1,5 +1,25 @@
 --------------------------------------------------------------PLSQL Practice--------------------------------------------------------------
-/*Q1. Difference between Delete and truncate proving some points*/
+/*--------------------------------------------------Q1 Started---------------------------------------------------------- 
+Difference between Delete and truncate proving some points.
+•	Delete is a DML command and truncate is a DDL command where DML commands are not auto committed and DDL commands are auto committed.
+•	We can use where condition in delete but in truncate where condition is not allowed.
+•	Delete is slower compared to truncate since deleted records are stored in undo table space for rollback and 
+    truncate is faster cause it doesn’t keeps the data in undo table space.
+•	Triggers will get fired while applying delete. Triggers will not get fired in truncate.
+•	Delete won’t reclaim the space because it moves the data into undo table space for rollback and truncate reclaim the space instantly.
+•	Delete won’t reset high level of watermark even if commit applied explicitly, but truncate reset high level of water mark instantly.
+•	From 12c onwards we can use “on delete cascade” in the child table for deletion of data from both parent and child table 
+    likewise in truncate we can able to truncate data from parent and child table at once applying “truncate table tb_name cascade”.
+
+Note: When we apply delete on parent table why data gets deleted from child table? 
+      But in the same way when we apply delete on the child table data only gets deleted from the child table not from the parent table why? 
+      Same applies to truncate also.
+      • It is because data flows from parent to child not from child to parent.
+
+      What if I want to delete the records and get faster response to load in the table, is there any way?
+      • Yes, there is a way, we can create a backup of that table and apply truncate then we can load the data as per our need without applying delete directly instead we can filter out the records through query and load the data in the table.
+*/
+
 --Pont1:Triggers will get fired while applying delete. Triggers will not get fired in truncate. To Prove this below is the code
 
 --Loop to insert some records in table
@@ -79,7 +99,7 @@ INSERT INTO PARENT_TABLE (PARENT_ID, NAME) VALUES (107, 'Item 7');
 /*In this parent table if i apply delete command on parent table the asociated data in child table will get deleted
 in the same way if i apply truncate table tb_name cascade then it will truncate both of the table*/
 truncate table PARENT_TABLE cascade;
---------Q1 End Here
+------------------------------------------------------------Q1 End-------------------------------------------------------------------
 
 /*Q2.Difference between procedure and function*/
 --Point1: We use out parameter in procedure to return a value and inside a function we use return keyword to return a value.
