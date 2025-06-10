@@ -1,5 +1,5 @@
 --------------------------------------------------------------PLSQL Practice--------------------------------------------------------------
-/*--------------------------------------------------Q1 Started---------------------------------------------------------- 
+/*-------------Q1 Started-----------
 Difference between Delete and truncate proving some points.
 •	Delete is a DML command and truncate is a DDL command where DML commands are not auto committed and DDL commands are auto committed.
 •	We can use where condition in delete but in truncate where condition is not allowed.
@@ -99,10 +99,110 @@ INSERT INTO PARENT_TABLE (PARENT_ID, NAME) VALUES (107, 'Item 7');
 /*In this parent table if i apply delete command on parent table the asociated data in child table will get deleted
 in the same way if i apply truncate table tb_name cascade then it will truncate both of the table*/
 truncate table PARENT_TABLE cascade;
-------------------------------------------------------------Q1 End-------------------------------------------------------------------
+-----------Q1 End------------
 
-/*Q2.Difference between procedure and function*/
---Point1: We use out parameter in procedure to return a value and inside a function we use return keyword to return a value.
+/*
+---------Q2 STARTED------------
+Difference between procedure and function
+• A Function must return a value while using return keyword whereas a procedure may be or may not be return a value using out or inout parameter.
+• A Function can be call from a select statement whereas a procedure cannot be call from a select statement.
+• A Function can be used for computational purposes whereas a procedure used for logical data flow purposes.
+• We can use DML statements inside procedure without any problem, 
+  but in function we cannot use DML statements directly inside function through select statement, 
+  to make it possible we can use pragma autonomous transaction for DML statements. 
+• Return keyword used in function to return a value and in procedure return keyword used to exit from the procedure.
+• From 12.1 onwards we can create function and procedure for the part of "with" clause statement.
+*/
+
+--We are just testing how return keyword works inside procedure
+create or replace procedure sp_update (
+    p_empno in number,
+    p_sal   in number,
+    p_out   out number 
+)
+as
+begin
+    
+    if p_empno is null THEN --When empno is null then it returns nothing
+    return; --This return keyword just used for out from the procedure
+    end if;
+
+    update emp_sal set sal=p_sal where EMP_NO=p_empno;
+    select sal into p_out from emp_sal where EMP_NO=p_empno;
+
+    EXCEPTION
+    WHEN others THEN
+    DBMS_OUTPUT.PUT_LINE('No data found');
+
+end;
+
+DECLARE
+    v_rows_updated NUMBER;
+BEGIN
+    sp_update(p_empno=>1,p_sal=>10400,p_out=>v_rows_updated);
+    DBMS_OUTPUT.PUT_LINE('Rows updated: ' || v_rows_updated);
+END;
+/
+
+--function with a return keyword
+CREATE OR REPLACE FUNCTION fn_avgsal (
+   p_empid NUMBER
+)
+RETURN VARCHAR2
+IS
+    -- Variable declarations
+    v_avgsal NUMBER;
+BEGIN
+    -- Function logic
+    SELECT avg(salary) INTO v_avgsal
+    FROM employees
+    WHERE employee_id = p_empid;
+
+    RETURN TO_CHAR(v_avgsal);
+END fn_avgsal;
+/
+
+--From 12.1 onwards we can create function and procedure for the part of "with" clause statement.
+--Function
+WITH
+  FUNCTION get_bonus(p_salary NUMBER) RETURN NUMBER IS
+  BEGIN
+    RETURN p_salary * 0.10;
+  END; --It's only usable within this SQL query and doesn't persist in the database.
+SELECT employee_id,
+       first_name,
+       salary,
+       get_bonus(salary) AS bonus
+FROM   employees;
+
+--Procedure
+DECLARE
+  v_emp_id   employees.employee_id%TYPE := 101;
+  v_new_sal  employees.salary%TYPE := 60000;
+BEGIN
+  WITH
+    PROCEDURE update_salary(p_emp_id NUMBER, p_salary NUMBER) IS
+    BEGIN
+      UPDATE employees
+      SET salary = p_salary
+      WHERE employee_id = p_emp_id;
+    END;
+  BEGIN
+    update_salary(v_emp_id, v_new_sal);
+    COMMIT;
+  END;
+END;
+/
+
+
+/*Note: Can a function compile without a return keyword?
+Yes a function can be compile witout a return keyword but cant be call from a select statement.
+*/
+
+
+---------Q2 END----------------
+
+
 
 
 
