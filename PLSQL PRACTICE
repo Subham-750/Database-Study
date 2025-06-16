@@ -197,8 +197,44 @@ Note: Can a function compile without a return keyword?
 Yes a function can be compile witout a return keyword but cant be call from a select statement.
 */
 ---------Q2 END----------------
+/*
+---------Q3 STARTED------------
+Difference between NVL,NVL2,NULLIF,COALESCE
+NVL:Nvl function returns the default value at the place of null. And it takes only 2 arguments
+NVL2:Nvl2 returns the second value when we have value at first place and returns 3rd value when we have null value at first place.
+     it takes 3 arguments
+NULLIF: Nullif function returns null when both value in arg1,arg2 are same and if not same it returns first arg1. it takes two arg. 
+COALESCE: This function returns the first not null value.
 
+*/
 
+--Testing NVL
+select nvl(null,'Subham') from dual; --result subham
+select nvl(NULL,2) from dual; --result 2
+select nvl(2,'Subh') from dual; --conversion error
+select nvl(null,null) from dual; --result null
 
+--Testing NVL2
+select nvl2(null,'A','B') from dual;-- returns 'B'
+select nvl2(4,1,2) from dual; -- returns 1
+select nvl2(1,'A','B') from dual; -- returns A
+select nvl2('A',1,2) from dual; -- returns 1
+select nvl2('A',null,2) from dual; -- returns null
+
+--Tetsing nullif
+select nullif('A','B') from dual;--returns A
+select nullif(null,'B') from dual;--data type mismatch
+select nullif('A',null) from dual;--returns A
+select nullif('A',2) from dual;--datatype mismatch error
+select nullif('A','A') from dual;--returns null
+
+--Testing coalesce
+select coalesce('A','B','C') from dual;-- returns A
+select coalesce(null,'B','C') from dual;-- returns B
+select coalesce(null,null,'C') from dual;-- returns C
+select coalesce(null,null,null) from dual;-- returns null
+select coalesce(null,null,2) from dual;-- returns 2
+select coalesce(null,'A',2) from dual;-- datatype mismatch error
+---------Q3 END----------------
 
 
