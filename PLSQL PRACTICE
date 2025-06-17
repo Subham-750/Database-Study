@@ -199,7 +199,8 @@ Yes a function can be compile witout a return keyword but cant be call from a se
 ---------Q2 END----------------
 /*
 ---------Q3 STARTED------------
-Difference between NVL,NVL2,NULLIF,COALESCE
+Difference between NVL,NVL2,NULLIF,COALESCE?
+
 NVL:Nvl function returns the default value at the place of null. And it takes only 2 arguments
 NVL2:Nvl2 returns the second value when we have value at first place and returns 3rd value when we have null value at first place.
      it takes 3 arguments
@@ -237,4 +238,25 @@ select coalesce(null,null,2) from dual;-- returns 2
 select coalesce(null,'A',2) from dual;-- datatype mismatch error
 ---------Q3 END----------------
 
+/*
+------------------Q4 started--------------
+What is the difference between rank and dense rank?
+Rank(): Normally we assign the same rank in rank function and skip the next rank.
+dense_rank():dense rank does opposit compaire to rank. it doesnt skip the next rank although it keeps the same rank.
+------------------Q4 end--------------
+*/
+
+/*
+------------------Q5 started----------
+What is SQL?
+=>Sql stands for structure query language.
+=>It is used to communicate with database.
+=>Sql consists of 7 types DCL,DDL,DML,TCL,DQL,system controll statement(alter system),session controll statement(alter session)
+------------------Q5 end--------------
+*/
+/*
+------------------Q6 started----------
+
+------------------Q6 end--------------
+*/
 
