@@ -254,9 +254,102 @@ What is SQL?
 =>Sql consists of 7 types DCL,DDL,DML,TCL,DQL,system controll statement(alter system),session controll statement(alter session)
 ------------------Q5 end--------------
 */
+
 /*
 ------------------Q6 started----------
 
 ------------------Q6 end--------------
 */
+
+/*
+------------------Q10 started----------
+What is the difference between decode and case?
+=>Decode is oracle specific and case is a ansi standard which can be accessed in any sql language. Both satishfies the if else statement.
+=>In Decode we can only use '=' operator but in case we can use all operator like relational and logical.
+=>Decode can accept different datatype means internally it can convert the number datatype to char datatype but in case it wont.
+=>With Decode we cannot dirrectly assign the result to a variable as we do normaly with other function inside anonymous block.
+ but it can be used with select statement where we can assign the variable with into clause. 
+ In case expression we assign the result diirectly to the vriable or as a part of standalone.
+*/
+CREATE TABLE student_tab (
+    id      NUMBER,
+    name    VARCHAR2(100),
+    mark    NUMBER,
+    result  VARCHAR2(1)
+);
+
+insert into student_tab values(1, 'SCOTT', 85, 'P');
+insert into student_tab values(2, 'ALLEN', 30, 'F');
+insert into student_tab values(3, 'SMITH', 45, 'P');
+insert into student_tab values(4, 'ADAMS', 25, 'F');
+insert into student_tab values(5, 'JAMES', 55, NULL);
+
+rename student_tab to student;
+
+--Test 1
+select id,name,mark,decode(result,'P','PASS','F','FAIL','NO DATA FOUND') result from student;
+select id,name,mark,case result when 'P' then 'PASS'
+                                when 'F' then 'FAIL'
+                                else 'NOT FOUND' end
+ result from student;
+--or here we can pass any operator for logical data flow
+select id,name,mark,case when result='P' then 'PASS'
+                                when result='F' then 'FAIL'
+                                else 'NOT FOUND' end
+result from student;
+
+--Test 2
+select decode(:input,1,'PASS','F','FAIL','NO DATA FOUND') result from dual;
+select case :input when 1 then 'PASS'
+                                when '2' then 'FAIL'
+                                else 'NOT FOUND' end result
+from dual;
+ 
+--Test 3 like with this function we can use.
+set SERVEROUTPUT on;
+declare
+v_var  VARCHAR2(10);
+BEGIN
+    v_var:=upper('subham');
+    DBMS_OUTPUT.PUT_LINE(v_var);
+end;
+
+--But with decode function we cannot do this
+declare
+v_var  VARCHAR2(10);
+BEGIN
+    v_var:=decode(:input,'S','subham','P','Priyanka','Nothing');
+    DBMS_OUTPUT.PUT_LINE(v_var);
+end;
+--Decode can only be used with select statement not as a only function/expression
+declare
+v_var  VARCHAR2(10);
+BEGIN
+    select decode(:input,'S','subham','P','Priyanka','Nothing') into v_var from dual;
+    DBMS_OUTPUT.PUT_LINE(v_var);
+end;
+
+--Here in case we can use it as standalone
+DECLARE
+    v_var  VARCHAR2(10);
+BEGIN
+    CASE :input 
+                WHEN 'P' THEN v_var := 'PASS';
+                WHEN 'F' THEN v_var := 'FAIL';
+                ELSE v_var := 'NOT FOUND';
+             END case;
+    DBMS_OUTPUT.PUT_LINE(v_var);
+END;
+--Here we can use as a part of expression.
+DECLARE
+    v_var  VARCHAR2(10);
+BEGIN
+    v_var := CASE :input 
+                WHEN 'P' THEN  'PASS'
+                WHEN 'F' THEN 'FAIL'
+                ELSE 'NOT FOUND'
+             END;
+    DBMS_OUTPUT.PUT_LINE(v_var);
+END;
+------------------Q10 end--------------
 
