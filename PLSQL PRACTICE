@@ -352,4 +352,68 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE(v_var);
 END;
 ------------------Q10 end--------------
+/*
+--------Q11 Started---------
+What is the difference between replace and translate?
+Replace and translate both are  string manupulation function but there are certain chareacteristics that makes these two function separate.
+
+Replace:
+=>Replace function used for replace the substring from the actual string.
+=>it has 3 arguments replace('Actual string','Substring','Replacement string')
+=>If we do not provide any string for replacemnet it will remove that entire substring from the actual string
+
+Translate:
+=>This function same as replace function but it works upon character not entire substring.
+=>It has 3 arguments translate('ABCDEFGHIJKL','ABC','123')
+=>It reads each substring character and asign the same corespondent number to it like A-1,B-2,C-3.
+=>If any of the number missing to its character it will simply remove that character from actual string
+=>If we remove the complete replacemnet string it will throw an null result.
+*/
+--This will replace the substring with 'MNO'
+select replace('ABC DEF GHI JKL','DEF','MNO') result from dual;
+
+--This will remove the Complete string from the string
+select replace('ABC DEF GHI JKL','DEF','') result from dual;
+
+--This translate function will give null value
+select translate('ABC DEF GHI JKL','DEF','') result from dual;
+--result will be null
+
+--This translate function will replace ADGJ value with 1234
+select translate('ABC DEF GHI JKL','ADGJ','1234') result from dual;
+--result will be 1BC 2EF 3HI 4KL
+
+--This translate function will remove 'J' from string
+select translate('ABC DEF GHI JKL','ADGJ','123') result from dual;
+--Result will be 1BC 2EF 3HI KL
+
+-----------Q11 Ended-----------------
+/*
+--------------Q12 started------------
+What is View in oracle?
+=>View is a logical table which is the result set of an query.
+=>It doesnt occoupy space in memory since underline query referenceing to the base table.
+=>The main advantage of view is to hide the actual columns of table to the user.
+=>View stores the sql defination in data dictonary.
+
+What is simple and complex view?
+=>Simple view Consist of a single table.
+=>Simple view not consist of aggrigate function, group by and distinct or psuedo columns.
+=>We can perform DML operation in simple view.
+
+=>Complex view consist of one or multiple tables.
+=>It consists of aggrigate functions, group by and psuedocolumns etc.
+=>We cant perform DML operations in complex view.
+
+What is force view and why it is created?
+=>Force view created in absense of actual table. So for the referrence to the actual table in future we created force view.
+=>It can be of simple or complex depends on need.
+-----------Q12 Ended--------------------
+*/
+
+/*
+--------------Q13 Started-------------------
+Can We use DDL or DML statement inside a function?
+
+*/
 
