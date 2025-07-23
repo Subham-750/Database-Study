@@ -1,13 +1,21 @@
 -------------------------------------------------------------SQL QUERY PRACTICE---------------------------------------------------------
 --Q1.Find the second highest salary from employees.
-select max(salary) salary from employees where salary<(select max(salary) from employees);
-select max(salary) salary from employees where salary not in (select max(salary) from employees);
+select distinct salary from employees order by salary desc offset 1 rows fetch next 1 rows only;
+select max(salary) maxsal from employees where salary<(select max(salary) from employees);
+select max(salary) maxsal from employees where salary not in (select max(salary) from employees);
 
 --Q2.Display the highest paid employees from each department.
-select department_id,max(salary) salary from employees group by department_id order by department_id;
+select max(salary) highest_paid_employees,department_id from employees group by department_id order by DEPARTMENT_ID;
 
 --Q3.Display the lowest paid employees from each department.
-select department_id,min(salary) salary from employees group by department_id order by department_id;
+select min(salary) highest_paid_employees,department_id from employees group by department_id order by DEPARTMENT_ID;
 
 --Q4.Display the number of employees in each department.
-select count(1) noofemployees,department_id from employees group by department_id order by department_id;
+select count(1) no_of_employees,department_id from employees group by department_id order by DEPARTMENT_ID;
+
+--Q5.Write a query to find out duplicate records.
+select col1,col2,count(1) from employees group by col1,col2 having count(1)>1; 
+
+--Q6.Write a query to delete duplicate records.
+delete from emp1 where rowid in (
+select rn from (select rowid as rn,row_number() OVER (Partition by salary ORDER BY salary) AS drank from emp1) where drank>1);

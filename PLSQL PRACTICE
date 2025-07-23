@@ -417,3 +417,79 @@ Can We use DDL or DML statement inside a function?
 
 */
 
+/*
+---------------Q 15 started------------------------
+Can we use in, out, inout parameter inside a function?
+=>We can use in parameter inside a function without any issue.
+=>We can use out and inout parameter inside a function without any compilation error. But when we call it through select statement
+  We will get an error but it can be possible to use it inside plsql block as a expression.
+*/
+-- This is an normal function
+create or replace function fn_inout(
+    arg1 number
+)
+return number as
+begin
+    return arg1*arg1;
+end;
+
+--As we can see here we use in parameter which is normal for function to execute
+create or replace function fn_inout(
+    arg1 in number
+)
+return number as
+begin
+    return arg1*arg1;
+end;
+
+--In this below function we use out parameter which is quite normal for compilation but while calling it through select statement we get an error.
+create or replace function fn_inout(
+    arg1 in number,
+    arg2 out number
+)
+return number as
+begin
+    arg2:=arg1+arg1;
+    return arg1*arg1;
+end;
+
+--Will get an error cause we use select statement which is not allowed for out parameter but we can use as a part of expression.
+DECLARE
+p_in number;
+p_out number;
+BEGIN
+    select fn_inout(4,p_out) into p_in from dual;
+end;
+
+--We can use as a part of expression.
+set SERVEROUTPUT on;
+DECLARE
+p_in number;
+p_out number;
+BEGIN
+    p_in:=fn_inout(4,p_out);
+    DBMS_OUTPUT.PUT_LINE('In parameter result ='||p_in);
+    DBMS_OUTPUT.PUT_LINE('Out parameter result ='||p_out);
+end;
+
+--We can use in out parameter like as way
+create or replace function fn_inout(
+    arg1 in number,
+    arg2 in out number
+)
+return number as
+begin
+    arg2:=arg1+arg2;
+    return arg1*arg2;
+end;
+-- We can use arg2 as a input and output also
+set SERVEROUTPUT on;
+DECLARE
+p_in number;
+p_inout number;
+BEGIN
+    p_inout:=9;
+    p_in:=fn_inout(4,p_inout);
+    DBMS_OUTPUT.PUT_LINE('In parameter result ='||p_in);
+    DBMS_OUTPUT.PUT_LINE('Out parameter result ='||p_inout);
+end;
