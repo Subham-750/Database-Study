@@ -15,7 +15,99 @@ select count(1) no_of_employees,department_id from employees group by department
 
 --Q5.Write a query to find out duplicate records.
 select col1,col2,count(1) from employees group by col1,col2 having count(1)>1; 
+select * from (select rowid rn,row_number() over (partition by salary order by salary) duplicate from employees) where duplicate>1;
 
 --Q6.Write a query to delete duplicate records.
 delete from emp1 where rowid in (
 select rn from (select rowid as rn,row_number() OVER (Partition by salary ORDER BY salary) AS drank from emp1) where drank>1);
+
+delete from table_name where rowid in (
+select rn from (select rowid rn,row_number() over (partition by salary order by salary) duplicate from employees) where duplicate>1);
+
+--Q7.Get top 3 salaries per department.
+select * from (
+select salary,department_id,row_number() over (partition by department_id order by salary desc) rank 
+from employees group by salary,DEPARTMENT_ID) where rank<=3;
+
+--Q8.Find employees who are hired on weekends.
+select * from employees where trim(to_char(hire_date, 'day')) in ('saturday','sunday');
+
+--Q9.rank employee by salary within each department.
+select department_id,salary,rank() over (partition by department_id order by salary) rank from employees;
+
+--Q10.Identify top performing departments by avg salary.
+select avg(salary) avgsal,department_id from employees group by department_id order by avgsal desc;
+
+--Q11.Find the percentage of employees in each departments.
+select department_id,count(1)/(select count(1) from employees)*100 from employees group by department_id;
+
+--Q12.Retrive the maximum salary difference within each department.
+select DEPARTMENT_ID,max(salary)-min(salary) maxsaldiff from employees group by department_id;
+
+--Q13.Find employees with salary higher than department average.
+select * from employees e where salary>(select avgsal from(select DEPARTMENT_ID,avg(salary) avgsal from employees group by department_id)d where e.department_id=d.department_id);
+
+with cte as (
+select department_id,round(avg(salary)) avgsalary from employees group by department_id)
+select * from cte join employees e on cte.department_id=e.department_id where e.salary>cte.avgsalary;
+
+--Q14.Swap valus of column.
+select EMP_ID,DEPARTMENT,case emp_id when 1 then (select DEPARTMENT from empdup where EMP_ID=4) when 4 then (select DEPARTMENT from empdup where EMP_ID=1 ) else department end from empdup;
+
+MERGE INTO empdup e
+USING (SELECT emp_id,CASE emp_id WHEN 1 THEN (SELECT department FROM empdup WHERE emp_id = 4) WHEN 4 THEN (SELECT department FROM empdup WHERE emp_id = 1)END AS new_dept
+FROM empdup WHERE emp_id IN (1, 4)) src ON (e.emp_id = src.emp_id) WHEN MATCHED THEN UPDATE SET e.department = src.new_dept;
+
+--Q15.Write a query to find who is getting more than there manager.
+select * from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID and e.SALARY>m.SALARY;
+
+SELECT e.employee_id AS employee_id,e.first_name AS employee_name,e.manager_id AS manager_id,m.first_name AS manager_name,m.department_id AS manager_department
+FROM employees e LEFT JOIN employees m ON e.manager_id = m.employee_id where e.salary>m.salary;
+
+--Q16.Find employees who are managers
+select distinct m.FIRST_NAME from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID ;
+
+SELECT DISTINCT m.employee_id,m.first_name AS manager_name
+FROM employees e JOIN employees m ON e.manager_id = m.employee_id;
+
+--Q17.Find employees who are not managers
+select distinct m.FIRST_NAME from employees e,employees m where e.MANAGER_ID<>m.EMPLOYEE_ID ;
+
+--Q18.List employees along with their manager’s name.
+select distinct e.FIRST_NAME,m.FIRST_NAME from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID ;
+
+--Q19.Count how many employees each manager has
+select distinct m.FIRST_NAME manager_name,count(1) empcount from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID group by m.FIRST_NAME;
+
+--Q20.Find managers who manage more than 5 employees
+select m.FIRST_NAME,count(1) from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID group by m.FIRST_NAME having count(1)>5;
+
+--Q21.Find all employees in the same department as their manager
+select e.FIRST_NAME from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID and e.department_id=m.department_id;
+
+SELECT e.first_name,e.manager_id,e.department_id,m.first_name,m.department_id
+FROM employees e JOIN employees m ON e.manager_id = m.employee_id where e.department_id=m.department_id;
+
+
+--Q22.Find employees who have the same salary as their manager
+select e.FIRST_NAME from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID and e.salary=m.salary;
+
+--Q23.Get the top 3 managers who have the highest total salary among their subordinates
+select distinct m.EMPLOYEE_ID,m.fIRST_NAME,sum(e.salary) total_team_salary from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID 
+group by m.EMPLOYEE_ID,m.fIRST_NAME ORDER BY total_team_salary DESC FETCH FIRST 3 ROWS ONLY; 
+
+--Q24.Find the highest-paid employee under each manager
+select * from (
+select e.FIRST_NAME employee,e.salary,m.FIRST_NAME manager,dense_rank() over (partition by m.FIRST_NAME order by e.salary desc) rn
+from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID) where rn=1;
+
+SELECT e.manager_id,m.first_name AS manager_name,e.employee_id,e.first_name AS employee_name,e.salary
+FROM employees e JOIN employees m ON e.manager_id = m.employee_id
+WHERE (e.manager_id, e.salary) IN (SELECT manager_id,MAX(salary)FROM employees GROUP BY manager_id);
+
+--Q25.Find employees who joined in the last 6 months. (Imp)
+select * from employees where to_char(hire_date, 'mon')  between 'january' and 'june';
+SELECT * FROM EMPLOYEES WHERE HIRE_DATE >= ADD_MONTHS(SYSDATE, -6);
+
+
+
