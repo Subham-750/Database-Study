@@ -109,5 +109,124 @@ WHERE (e.manager_id, e.salary) IN (SELECT manager_id,MAX(salary)FROM employees G
 select * from employees where to_char(hire_date, 'mon')  between 'january' and 'june';
 SELECT * FROM EMPLOYEES WHERE HIRE_DATE >= ADD_MONTHS(SYSDATE, -6);
 
+--Q26.Display the department wise total and avg salary
+select department_id,avg(salary),sum(salary) from employees group by department_id;
+
+--Q27.Get employee names in hierarchical order (manager → employee)
+SELECT LEVEL, EMPLOYEE_ID, FIRST_NAME, MANAGER_ID FROM EMPLOYEES
+START WITH MANAGER_ID IS NULL CONNECT BY PRIOR EMPLOYEE_ID = MANAGER_ID;
+
+--Q28.Display nth row in sql
+select e.*,row_number() over (order by EMPLOYEE_ID) nth from employees e;
+
+--Q29.Display the employee details who join before their manager.
+select * from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID and e.HIRE_DATE<m.HIRE_DATE;
+
+--30.Write a SQL query to display each employee's employee_id, salary, and a running_total column that shows the cumulative sum of salaries ordered by employee_id.
+select employee_id,salary,sum(salary) over (order by EMPLOYEE_ID) cumsalary from employees;
+
+--31.Write a SQL query to display each employee's employee_id, department_id, salary, and the cummulative salary of their department using a window function.
+select employee_id,DEPARTMENT_ID,salary,sum(salary) over (partition by department_id order by salary) cummulative_salary from employees group by EMPLOYEE_ID,DEPARTMENT_ID,SALARY;
+
+--32.Average Salary by Department using window function
+select department_id,avg(salary) over (partition by department_id) avgsalary from employees;
+
+--33.Maximum Salary per Department using window function
+SELECT employee_id,department_id,salary,MAX(salary) OVER (PARTITION BY department_id) AS max_salary_in_dept FROM employees;
+
+--34.Count of Employees per Department using window function
+SELECT department_id,count(1) OVER (PARTITION BY department_id) AS employeecount FROM employees;
+
+--35.Display first and last row of employee table.
+SELECT *
+FROM (
+        SELECT e.*, ROW_NUMBER() OVER (ORDER BY department_id) rn
+        FROM employees e
+        ORDER BY rn
+    )
+WHERE ROWNUM = 1
+UNION
+SELECT *
+FROM (
+        SELECT e.*, ROW_NUMBER() OVER (ORDER BY department_id) rn
+        FROM employees e
+        ORDER BY rn DESC
+    )
+WHERE ROWNUM = 1;
+
+select * from (select rownum r,e.* from employees e) where r=1 or r=(select count(1) from employees);
+
+--36.Display the details of lowest and highest salary in a table.
+select * from employees where salary=(select min(salary) from employees) or salary=(select max(salary) from employees);
+
+--37.Display the last two rows of the table
+select ROWNUM rn,e.* from employees e order by rn desc fetch next 2 rows only;
+
+select * from employees
+minus
+select * from employees where rownum<=(select count(1)-2 from employees);
+
+--38.Display the first and last two rows of the table.
+SELECT *
+FROM (
+    SELECT e.*, ROW_NUMBER() OVER (ORDER BY employee_id) rn
+    FROM employees e
+)
+WHERE rn <= 2
+UNION ALL
+SELECT *
+FROM (
+    SELECT e.*, ROW_NUMBER() OVER (ORDER BY employee_id DESC) rn
+    FROM employees e
+)
+WHERE rn <= 2;
+
+select * from (select rownum r,e.* from employees e) where r>(select count(1)-2 from employees) or r in (1,2); 
+
+--39.How to fetch  monthly Salary of Employee if annual salary is given?
+select 10000/12 from dual;
+
+--40.Display first 50% records from Employee table.
+select * from (select e.*,rownum rn from employees e) where rn<=(select count(1)/2 from employees);
+
+--41.Display last 50% records from Employee table?
+select * from (select e.*,rownum rn from employees e) where rn>=(select count(1)/2 from employees);
+
+--42.how to write sql query for the below scenario
+/*
+O
+R
+A
+C
+L
+E
+*/
+Select Substr('ORACLE',Level,1) From Dual
+Connect By Level<= Length('ORACLE');
+--`Connect By uses for hierarchical/tree data
+-- LEVEL is an Oracle pseudo-column that automatically numbers these rows.
+
+--42.How to add the email validation using only one query?
+SELECT
+Email
+FROM
+Employees
+where NOT REGEXP_LIKE(Email, '[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}', 'i');
+
+--43.How to display 1 to 100 Numbers with query?
+Select level from dual connect by level <=100;
+
+--44.How to dupliacte employee table?
+create table emp_dup as select * from employees;
+
+--45.How to duplicate employee table without using create table statement.
+set SERVEROUTPUT on;
+declare 
+v_dup varchar2(100);
+BEGIN
+    v_dup:='Create table emp_dup as select * from employees';
+     execute immediate v_dup;
+end;
+
 
 
