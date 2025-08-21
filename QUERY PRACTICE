@@ -80,14 +80,13 @@ select distinct e.FIRST_NAME,m.FIRST_NAME from employees e,employees m where e.M
 select distinct m.FIRST_NAME manager_name,count(1) empcount from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID group by m.FIRST_NAME;
 
 --Q20.Find managers who manage more than 5 employees
-select m.FIRST_NAME,count(1) from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID group by m.FIRST_NAME having count(1)>5;
+select m.FIRST_NAME,count(1) emp_count from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID group by m.FIRST_NAME having count(1)>5;
 
 --Q21.Find all employees in the same department as their manager
 select e.FIRST_NAME from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID and e.department_id=m.department_id;
 
 SELECT e.first_name,e.manager_id,e.department_id,m.first_name,m.department_id
 FROM employees e JOIN employees m ON e.manager_id = m.employee_id where e.department_id=m.department_id;
-
 
 --Q22.Find employees who have the same salary as their manager
 select e.FIRST_NAME from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID and e.salary=m.salary;
@@ -228,5 +227,7 @@ BEGIN
      execute immediate v_dup;
 end;
 
+--46.Write a sql query to find those employees who joined before 2003
+select * from employees where to_char(hire_date,'YYYY')<=2003;
 
 
