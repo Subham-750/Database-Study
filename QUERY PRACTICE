@@ -226,8 +226,35 @@ BEGIN
     v_dup:='Create table emp_dup as select * from employees';
      execute immediate v_dup;
 end;
-
 --46.Write a sql query to find those employees who joined before 2003
 select * from employees where to_char(hire_date,'YYYY')<=2003;
 
+--47.Find employees earning more than the average salary of their department.
+select * from employees e where salary>(select avg(salary) from employees b where e.department_id=b.department_id);
+
+--48.WAQ to find employees having atleast one person reporting under them.
+select * from employees e where 1<=(select count(1) from employees m where m.employee_id=e.manager_id);
+
+--49.Find employees who are the highest paid in their department.
+select * from employees e where salary=(select max(salary) from employees where department_id=e.department_id);
+
+--50.Find employees who earn more than their manager.
+select * from employees e where 1<=(select count(1) from employees m where m.employee_id=e.manager_id and e.salary>m.SALARY);
+
+--51.Find departments where at least one employee earns more than 10,000.
+SELECT d.department_id,d.department_name FROM departments d WHERE EXISTS (SELECT 1 FROM employees e WHERE e.department_id = d.department_id AND e.salary > 10000);
+
+--52.Find employees who have the minimum salary in their department.
+select * from employees e where salary in  (select min(salary) from employees where e.DEPARTMENT_ID=department_id);
+--53.Write an SQL query to count the number of employees who joined and exited the company in the year 2015?
+select count(1),TO_CHAR(hire_date, 'YY') year from employees where TO_CHAR(hire_date, 'YY')= 15 and to_char(exited, 'YY')=15 group by TO_CHAR(hire_date, 'YY');
+select count(1),EXTRACT(YEAR FROM hire_date) FROM employees WHERE EXTRACT(YEAR FROM hire_date) = 2015 group by EXTRACT(YEAR FROM hire_date);
+--55.Write an SQL query to find the department with the highest average salary among employees who worked for more than 24 months?
+select round(avg(salary)) avgsalary,DEPARTMENT_ID from employees where months_between(sysdate, hire_date) > 24 
+group by DEPARTMENT_ID order by avgsalary desc fetch first 1 rows only;
+--56.Find employees who work more than 5 months.
+select e.*,round(MONTHS_BETWEEN(to_date('01/01/2018','DD-MM-YYYY'),hire_date)) months from employees e 
+WHERE MONTHS_BETWEEN(to_date('01/01/2018','DD-MM-YYYY'), hire_date) > 5;
+--56.Write a query to display each employee’s name along with their manager’s name. If an employee does not have a manager, display "no manager" instead.(Use employees table)
+select e.first_name employees,nvl2(m.first_name,m.first_name,'No manager') managers from employees e left join employees m on e.MANAGER_ID=m.employee_id;
 
