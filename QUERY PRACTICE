@@ -1,195 +1,533 @@
 -------------------------------------------------------------SQL QUERY PRACTICE---------------------------------------------------------
 --Q1.Find the second highest salary from employees.
 select distinct salary from employees order by salary desc offset 1 rows fetch next 1 rows only;
-select max(salary) maxsal from employees where salary<(select max(salary) from employees);
-select max(salary) maxsal from employees where salary not in (select max(salary) from employees);
+select max(salary) from employees where salary < (select max(salary) from employees);
+select salary from(select salary,ROW_NUMBER() over (order by salary desc) rn from employees group by salary) where rn=2;
 
 --Q2.Display the highest paid employees from each department.
-select max(salary) highest_paid_employees,department_id from employees group by department_id order by DEPARTMENT_ID;
+select max(salary) highest_paid_employees,
+       department_id
+  from employees
+ group by department_id
+ order by department_id;
 
 --Q3.Display the lowest paid employees from each department.
-select min(salary) highest_paid_employees,department_id from employees group by department_id order by DEPARTMENT_ID;
+select min(salary) highest_paid_employees,department_id from employees group by department_id
+order by department_id;
 
 --Q4.Display the number of employees in each department.
-select count(1) no_of_employees,department_id from employees group by department_id order by DEPARTMENT_ID;
+select count(1) no_of_employees,
+       department_id
+  from employees
+ group by department_id
+ order by department_id;
 
 --Q5.Write a query to find out duplicate records.
-select col1,col2,count(1) from employees group by col1,col2 having count(1)>1; 
-select * from (select rowid rn,row_number() over (partition by salary order by salary) duplicate from employees) where duplicate>1;
+select col1,
+       col2,
+       count(1)
+  from employees
+ group by col1,
+          col2
+having count(1) > 1;
+select *
+  from (
+   select rowid rn,
+          row_number()
+          over(partition by salary
+               order by salary
+          ) duplicate
+     from employees
+)
+ where duplicate > 1;
 
 --Q6.Write a query to delete duplicate records.
-delete from emp1 where rowid in (
-select rn from (select rowid as rn,row_number() OVER (Partition by salary ORDER BY salary) AS drank from emp1) where drank>1);
+delete from emp1
+ where rowid in (
+   select rn
+     from (
+      select rowid as rn,
+             row_number()
+             over(partition by salary
+                  order by salary
+             ) as drank
+        from emp1
+   )
+    where drank > 1
+);
 
-delete from table_name where rowid in (
-select rn from (select rowid rn,row_number() over (partition by salary order by salary) duplicate from employees) where duplicate>1);
+delete from table_name
+ where rowid in (
+   select rn
+     from (
+      select rowid rn,
+             row_number()
+             over(partition by salary
+                  order by salary
+             ) duplicate
+        from employees
+   )
+    where duplicate > 1
+);
 
 --Q7.Get top 3 salaries per department.
-select * from (
-select salary,department_id,row_number() over (partition by department_id order by salary desc) rank 
-from employees group by salary,DEPARTMENT_ID) where rank<=3;
+select *
+  from (
+   select salary,
+          department_id,
+          row_number()
+          over(partition by department_id
+               order by salary desc
+          ) rank
+     from employees
+    group by salary,
+             department_id
+)
+ where rank <= 3;
 
 --Q8.Find employees who are hired on weekends.
-select * from employees where trim(to_char(hire_date, 'day')) in ('saturday','sunday');
+select * from employees where trim(to_char(hire_date,'DAY')) in ('SUNDAY','SATURDAY');
 
 --Q9.rank employee by salary within each department.
-select department_id,salary,rank() over (partition by department_id order by salary) rank from employees;
+select salary,department_id,rank() over (partition by DEPARTMENT_ID order by salary desc) from employees;
 
 --Q10.Identify top performing departments by avg salary.
-select avg(salary) avgsal,department_id from employees group by department_id order by avgsal desc;
+select avg(salary) avgsal,
+       department_id
+  from employees
+ group by department_id
+ order by avgsal desc;
 
 --Q11.Find the percentage of employees in each departments.
-select department_id,count(1)/(select count(1) from employees)*100 from employees group by department_id;
+select department_id,
+       count(1) / (
+          select count(1)
+            from employees
+       ) * 100
+  from employees
+ group by department_id;
 
 --Q12.Retrive the maximum salary difference within each department.
-select DEPARTMENT_ID,max(salary)-min(salary) maxsaldiff from employees group by department_id;
+select department_id,
+       max(salary) - min(salary) maxsaldiff
+  from employees
+ group by department_id;
 
 --Q13.Find employees with salary higher than department average.
-select * from employees e where salary>(select avgsal from(select DEPARTMENT_ID,avg(salary) avgsal from employees group by department_id)d where e.department_id=d.department_id);
+select *
+  from employees e
+ where salary > (
+   select avgsal
+     from (
+      select department_id,
+             avg(salary) avgsal
+        from employees
+       group by department_id
+   ) d
+    where e.department_id = d.department_id
+);
 
 with cte as (
-select department_id,round(avg(salary)) avgsalary from employees group by department_id)
-select * from cte join employees e on cte.department_id=e.department_id where e.salary>cte.avgsalary;
+   select department_id,
+          round(avg(salary)) avgsalary
+     from employees
+    group by department_id
+)
+select *
+  from cte
+  join employees e
+on cte.department_id = e.department_id
+ where e.salary > cte.avgsalary;
 
 --Q14.Swap valus of column.
-select EMP_ID,DEPARTMENT,case emp_id when 1 then (select DEPARTMENT from empdup where EMP_ID=4) when 4 then (select DEPARTMENT from empdup where EMP_ID=1 ) else department end from empdup;
+select emp_id,
+       department,
+       case emp_id
+          when 1 then
+             (
+                select department
+                  from empdup
+                 where emp_id = 4
+             )
+          when 4 then
+             (
+                select department
+                  from empdup
+                 where emp_id = 1
+             )
+          else
+             department
+       end
+  from empdup;
 
-MERGE INTO empdup e
-USING (SELECT emp_id,CASE emp_id WHEN 1 THEN (SELECT department FROM empdup WHERE emp_id = 4) WHEN 4 THEN (SELECT department FROM empdup WHERE emp_id = 1)END AS new_dept
-FROM empdup WHERE emp_id IN (1, 4)) src ON (e.emp_id = src.emp_id) WHEN MATCHED THEN UPDATE SET e.department = src.new_dept;
+merge into empdup e
+using (
+   select emp_id,
+          case emp_id
+             when 1 then
+                (
+                   select department
+                     from empdup
+                    where emp_id = 4
+                )
+             when 4 then
+                (
+                   select department
+                     from empdup
+                    where emp_id = 1
+                )
+          end as new_dept
+     from empdup
+    where emp_id in ( 1,
+                      4 )
+) src on ( e.emp_id = src.emp_id )
+when matched then update
+set e.department = src.new_dept;
 
 --Q15.Write a query to find who is getting more than there manager.
-select * from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID and e.SALARY>m.SALARY;
+select *
+  from employees e,
+       employees m
+ where e.manager_id = m.employee_id
+   and e.salary > m.salary;
 
-SELECT e.employee_id AS employee_id,e.first_name AS employee_name,e.manager_id AS manager_id,m.first_name AS manager_name,m.department_id AS manager_department
-FROM employees e LEFT JOIN employees m ON e.manager_id = m.employee_id where e.salary>m.salary;
+select e.employee_id as employee_id,
+       e.first_name as employee_name,
+       e.manager_id as manager_id,
+       m.first_name as manager_name,
+       m.department_id as manager_department
+  from employees e
+  left join employees m
+on e.manager_id = m.employee_id
+ where e.salary > m.salary;
 
 --Q16.Find employees who are managers
-select distinct m.FIRST_NAME from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID ;
+select distinct m.first_name
+  from employees e,
+       employees m
+ where e.manager_id = m.employee_id;
 
-SELECT DISTINCT m.employee_id,m.first_name AS manager_name
-FROM employees e JOIN employees m ON e.manager_id = m.employee_id;
+select distinct m.employee_id,
+                m.first_name as manager_name
+  from employees e
+  join employees m
+on e.manager_id = m.employee_id;
 
 --Q17.Find employees who are not managers
-select distinct m.FIRST_NAME from employees e,employees m where e.MANAGER_ID<>m.EMPLOYEE_ID ;
+SELECT * FROM employees WHERE employee_id NOT IN (SELECT DISTINCT manager_id FROM employees WHERE manager_id IS NOT NULL);
+
 
 --Q18.List employees along with their manager’s name.
-select distinct e.FIRST_NAME,m.FIRST_NAME from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID ;
+select distinct e.first_name,
+                m.first_name
+  from employees e,
+       employees m
+ where e.manager_id = m.employee_id;
 
 --Q19.Count how many employees each manager has
-select distinct m.FIRST_NAME manager_name,count(1) empcount from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID group by m.FIRST_NAME;
+select manager_id,count(1) from employees where MANAGER_ID is not null group by manager_id;
+select distinct m.first_name manager_name,
+                count(1) empcount
+  from employees e,
+       employees m
+ where e.manager_id = m.employee_id
+ group by m.first_name;
 
 --Q20.Find managers who manage more than 5 employees
-select m.FIRST_NAME,count(1) emp_count from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID group by m.FIRST_NAME having count(1)>5;
+select m.first_name,
+       count(1) emp_count
+  from employees e,
+       employees m
+ where e.manager_id = m.employee_id
+ group by m.first_name
+having count(1) > 5;
 
 --Q21.Find all employees in the same department as their manager
-select e.FIRST_NAME from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID and e.department_id=m.department_id;
+select e.first_name
+  from employees e,
+       employees m
+ where e.manager_id = m.employee_id
+   and e.department_id = m.department_id;
 
-SELECT e.first_name,e.manager_id,e.department_id,m.first_name,m.department_id
-FROM employees e JOIN employees m ON e.manager_id = m.employee_id where e.department_id=m.department_id;
+select e.first_name,
+       e.manager_id,
+       e.department_id,
+       m.first_name,
+       m.department_id
+  from employees e
+  join employees m
+on e.manager_id = m.employee_id
+ where e.department_id = m.department_id;
 
 --Q22.Find employees who have the same salary as their manager
-select e.FIRST_NAME from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID and e.salary=m.salary;
+select e.first_name
+  from employees e,
+       employees m
+ where e.manager_id = m.employee_id
+   and e.salary = m.salary;
 
 --Q23.Get the top 3 managers who have the highest total salary among their subordinates
-select distinct m.EMPLOYEE_ID,m.fIRST_NAME,sum(e.salary) total_team_salary from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID 
-group by m.EMPLOYEE_ID,m.fIRST_NAME ORDER BY total_team_salary DESC FETCH FIRST 3 ROWS ONLY; 
+select distinct m.employee_id,
+                m.first_name,
+                sum(e.salary) total_team_salary
+  from employees e,
+       employees m
+ where e.manager_id = m.employee_id
+ group by m.employee_id,
+          m.first_name
+ order by total_team_salary desc
+ fetch first 3 rows only; 
 
 --Q24.Find the highest-paid employee under each manager
-select * from (
-select e.FIRST_NAME employee,e.salary,m.FIRST_NAME manager,dense_rank() over (partition by m.FIRST_NAME order by e.salary desc) rn
-from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID) where rn=1;
+select *
+  from (
+   select e.first_name employee,
+          e.salary,
+          m.first_name manager,
+          dense_rank()
+          over(partition by m.first_name
+               order by e.salary desc
+          ) rn
+     from employees e,
+          employees m
+    where e.manager_id = m.employee_id
+)
+ where rn = 1;
 
-SELECT e.manager_id,m.first_name AS manager_name,e.employee_id,e.first_name AS employee_name,e.salary
-FROM employees e JOIN employees m ON e.manager_id = m.employee_id
-WHERE (e.manager_id, e.salary) IN (SELECT manager_id,MAX(salary)FROM employees GROUP BY manager_id);
+select e.manager_id,
+       m.first_name as manager_name,
+       e.employee_id,
+       e.first_name as employee_name,
+       e.salary
+  from employees e
+  join employees m
+on e.manager_id = m.employee_id
+ where ( e.manager_id, e.salary ) in (
+   select manager_id,
+          max(salary)
+     from employees
+    group by manager_id
+);
 
 --Q25.Find employees who joined in the last 6 months. (Imp)
-select * from employees where to_char(hire_date, 'mon')  between 'january' and 'june';
-SELECT * FROM EMPLOYEES WHERE HIRE_DATE >= ADD_MONTHS(SYSDATE, -6);
+select *
+  from employees
+ where hire_date >= add_months(
+   sysdate,
+   -6
+);
 
 --Q26.Display the department wise total and avg salary
-select department_id,avg(salary),sum(salary) from employees group by department_id;
+select department_id,
+       avg(salary),
+       sum(salary)
+  from employees
+ group by department_id;
 
 --Q27.Get employee names in hierarchical order (manager → employee)
-SELECT LEVEL, EMPLOYEE_ID, FIRST_NAME, MANAGER_ID FROM EMPLOYEES
-START WITH MANAGER_ID IS NULL CONNECT BY PRIOR EMPLOYEE_ID = MANAGER_ID;
+select level,
+       employee_id,
+       first_name,
+       manager_id
+  from employees
+start with
+   manager_id is null
+connect by
+   prior employee_id = manager_id;
 
 --Q28.Display nth row in sql
-select e.*,row_number() over (order by EMPLOYEE_ID) nth from employees e;
+select e.*,
+       row_number()
+       over(
+           order by employee_id
+       ) nth
+  from employees e;
 
 --Q29.Display the employee details who join before their manager.
-select * from employees e,employees m where e.MANAGER_ID=m.EMPLOYEE_ID and e.HIRE_DATE<m.HIRE_DATE;
+select *
+  from employees e,
+       employees m
+ where e.manager_id = m.employee_id
+   and e.hire_date < m.hire_date;
 
 --30.Write a SQL query to display each employee's employee_id, salary, and a running_total column that shows the cumulative sum of salaries ordered by employee_id.
-select employee_id,salary,sum(salary) over (order by EMPLOYEE_ID) cumsalary from employees;
+select employee_id,
+       salary,
+       sum(salary)
+       over(
+           order by employee_id
+       ) cumsalary
+  from employees;
 
 --31.Write a SQL query to display each employee's employee_id, department_id, salary, and the cummulative salary of their department using a window function.
-select employee_id,DEPARTMENT_ID,salary,sum(salary) over (partition by department_id order by salary) cummulative_salary from employees group by EMPLOYEE_ID,DEPARTMENT_ID,SALARY;
+select employee_id,
+       department_id,
+       salary,
+       sum(salary)
+       over(partition by department_id
+            order by salary
+       ) cummulative_salary
+  from employees
+ group by employee_id,
+          department_id,
+          salary;
 
 --32.Average Salary by Department using window function
-select department_id,avg(salary) over (partition by department_id) avgsalary from employees;
+select department_id,
+       avg(salary)
+       over(partition by department_id) avgsalary
+  from employees;
 
 --33.Maximum Salary per Department using window function
-SELECT employee_id,department_id,salary,MAX(salary) OVER (PARTITION BY department_id) AS max_salary_in_dept FROM employees;
+select employee_id,
+       department_id,
+       salary,
+       max(salary)
+       over(partition by department_id) as max_salary_in_dept
+  from employees;
 
 --34.Count of Employees per Department using window function
-SELECT department_id,count(1) OVER (PARTITION BY department_id) AS employeecount FROM employees;
+select department_id,
+       count(1)
+       over(partition by department_id) as employeecount
+  from employees;
 
 --35.Display first and last row of employee table.
-SELECT *
-FROM (
-        SELECT e.*, ROW_NUMBER() OVER (ORDER BY department_id) rn
-        FROM employees e
-        ORDER BY rn
-    )
-WHERE ROWNUM = 1
-UNION
-SELECT *
-FROM (
-        SELECT e.*, ROW_NUMBER() OVER (ORDER BY department_id) rn
-        FROM employees e
-        ORDER BY rn DESC
-    )
-WHERE ROWNUM = 1;
+select *
+  from (
+   select e.*,
+          row_number()
+          over(
+              order by department_id
+          ) rn
+     from employees e
+    order by rn
+)
+ where rownum = 1
+union
+select *
+  from (
+   select e.*,
+          row_number()
+          over(
+              order by department_id
+          ) rn
+     from employees e
+    order by rn desc
+)
+ where rownum = 1;
 
-select * from (select rownum r,e.* from employees e) where r=1 or r=(select count(1) from employees);
+select *
+  from (
+   select rownum r,
+          e.*
+     from employees e
+)
+ where r = 1
+    or r = (
+   select count(1)
+     from employees
+);
 
 --36.Display the details of lowest and highest salary in a table.
-select * from employees where salary=(select min(salary) from employees) or salary=(select max(salary) from employees);
+select *
+  from employees
+ where salary = (
+   select min(salary)
+     from employees
+)
+    or salary = (
+   select max(salary)
+     from employees
+);
 
 --37.Display the last two rows of the table
-select ROWNUM rn,e.* from employees e order by rn desc fetch next 2 rows only;
+select rownum rn,
+       e.*
+  from employees e
+ order by rn desc
+ fetch next 2 rows only;
 
-select * from employees
+select *
+  from employees
 minus
-select * from employees where rownum<=(select count(1)-2 from employees);
+select *
+  from employees
+ where rownum <= (
+   select count(1) - 2
+     from employees
+);
 
 --38.Display the first and last two rows of the table.
-SELECT *
-FROM (
-    SELECT e.*, ROW_NUMBER() OVER (ORDER BY employee_id) rn
-    FROM employees e
+select *
+  from (
+   select e.*,
+          row_number()
+          over(
+              order by employee_id
+          ) rn
+     from employees e
 )
-WHERE rn <= 2
-UNION ALL
-SELECT *
-FROM (
-    SELECT e.*, ROW_NUMBER() OVER (ORDER BY employee_id DESC) rn
-    FROM employees e
+ where rn <= 2
+union all
+select *
+  from (
+   select e.*,
+          row_number()
+          over(
+              order by employee_id desc
+          ) rn
+     from employees e
 )
-WHERE rn <= 2;
+ where rn <= 2;
 
-select * from (select rownum r,e.* from employees e) where r>(select count(1)-2 from employees) or r in (1,2); 
+select *
+  from (
+   select rownum r,
+          e.*
+     from employees e
+)
+ where r > (
+   select count(1) - 2
+     from employees
+)
+    or r in ( 1,
+              2 ); 
+
+(select * from (
+SELECT e.*,row_number() over (order by employee_id)s FROM employees e) order by s fetch next 2 rows only)
+union all
+(select * from (
+SELECT e.*,row_number() over (order by employee_id)s FROM employees e) order by s desc fetch next 2 rows only);
+
 
 --39.How to fetch  monthly Salary of Employee if annual salary is given?
-select 10000/12 from dual;
+select 10000 / 12
+  from dual;
 
 --40.Display first 50% records from Employee table.
-select * from (select e.*,rownum rn from employees e) where rn<=(select count(1)/2 from employees);
+select *
+  from (
+   select e.*,
+          rownum rn
+     from employees e
+)
+ where rn <= (
+   select count(1) / 2
+     from employees
+);
 
 --41.Display last 50% records from Employee table?
-select * from (select e.*,rownum rn from employees e) where rn>=(select count(1)/2 from employees);
+select *
+  from (
+   select e.*,
+          rownum rn
+     from employees e
+)
+ where rn >= (
+   select count(1) / 2
+     from employees
+);
 
 --42.how to write sql query for the below scenario
 /*
@@ -200,61 +538,439 @@ C
 L
 E
 */
-Select Substr('ORACLE',Level,1) From Dual
-Connect By Level<= Length('ORACLE');
+select substr(
+   'ORACLE',
+   level,
+   1
+)
+  from dual
+connect by
+   level <= length('ORACLE');
 --`Connect By uses for hierarchical/tree data
 -- LEVEL is an Oracle pseudo-column that automatically numbers these rows.
 
 --42.How to add the email validation using only one query?
-SELECT
-Email
-FROM
-Employees
-where NOT REGEXP_LIKE(Email, '[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}', 'i');
+select email
+  from employees
+ where not regexp_like ( email,'[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}','i' );
 
 --43.How to display 1 to 100 Numbers with query?
-Select level from dual connect by level <=100;
+select level
+  from dual
+connect by
+   level <= 100;
 
 --44.How to dupliacte employee table?
-create table emp_dup as select * from employees;
+create table emp_dup
+   as
+      select *
+        from employees;
 
 --45.How to duplicate employee table without using create table statement.
-set SERVEROUTPUT on;
-declare 
-v_dup varchar2(100);
-BEGIN
-    v_dup:='Create table emp_dup as select * from employees';
-     execute immediate v_dup;
+   set SERVEROUTPUT on;
+declare
+   v_dup varchar2(100);
+begin
+   v_dup := 'Create table emp_dup as select * from employees';
+   execute immediate v_dup;
 end;
 --46.Write a sql query to find those employees who joined before 2003
-select * from employees where to_char(hire_date,'YYYY')<=2003;
+select *
+  from employees
+ where to_char(
+   hire_date,
+   'YYYY'
+) <= 2003;
 
 --47.Find employees earning more than the average salary of their department.
-select * from employees e where salary>(select avg(salary) from employees b where e.department_id=b.department_id);
+select *
+  from employees e
+ where salary > (
+   select avg(salary)
+     from employees b
+    where e.department_id = b.department_id
+);
 
 --48.WAQ to find employees having atleast one person reporting under them.
-select * from employees e where 1<=(select count(1) from employees m where m.employee_id=e.manager_id);
-
+SELECT *
+FROM employees e
+WHERE e.employee_id IN (
+    SELECT DISTINCT manager_id
+    FROM employees
+    WHERE manager_id IS NOT NULL
+);
 --49.Find employees who are the highest paid in their department.
-select * from employees e where salary=(select max(salary) from employees where department_id=e.department_id);
+select *
+  from employees e
+ where salary = (
+   select max(salary)
+     from employees
+    where department_id = e.department_id
+);
 
 --50.Find employees who earn more than their manager.
-select * from employees e where 1<=(select count(1) from employees m where m.employee_id=e.manager_id and e.salary>m.SALARY);
+select *
+  from employees e
+ where 1 <= (
+   select count(1)
+     from employees m
+    where m.employee_id = e.manager_id
+      and e.salary > m.salary
+);
 
 --51.Find departments where at least one employee earns more than 10,000.
-SELECT d.department_id,d.department_name FROM departments d WHERE EXISTS (SELECT 1 FROM employees e WHERE e.department_id = d.department_id AND e.salary > 10000);
+select d.department_id,
+       d.department_name
+  from departments d
+ where exists (
+   select 1
+     from employees e
+    where e.department_id = d.department_id
+      and e.salary > 10000
+);
 
 --52.Find employees who have the minimum salary in their department.
-select * from employees e where salary in  (select min(salary) from employees where e.DEPARTMENT_ID=department_id);
+select *
+  from employees e
+ where salary in (
+   select min(salary)
+     from employees
+    where e.department_id = department_id
+);
+
 --53.Write an SQL query to count the number of employees who joined and exited the company in the year 2015?
-select count(1),TO_CHAR(hire_date, 'YY') year from employees where TO_CHAR(hire_date, 'YY')= 15 and to_char(exited, 'YY')=15 group by TO_CHAR(hire_date, 'YY');
-select count(1),EXTRACT(YEAR FROM hire_date) FROM employees WHERE EXTRACT(YEAR FROM hire_date) = 2015 group by EXTRACT(YEAR FROM hire_date);
+select count(1),
+       to_char(
+          hire_date,
+          'YY'
+       ) year
+  from employees
+ where to_char(
+      hire_date,
+      'YY'
+   ) = 15
+   and to_char(
+   exited,
+   'YY'
+) = 15
+ group by to_char(
+   hire_date,
+   'YY'
+);
+select count(1),
+       extract(year from hire_date)
+  from employees
+ where extract(year from hire_date) = 2015
+ group by extract(year from hire_date);
+
 --55.Write an SQL query to find the department with the highest average salary among employees who worked for more than 24 months?
-select round(avg(salary)) avgsalary,DEPARTMENT_ID from employees where months_between(sysdate, hire_date) > 24 
-group by DEPARTMENT_ID order by avgsalary desc fetch first 1 rows only;
+select round(avg(salary)) avgsalary,
+       department_id
+  from employees
+ where months_between(
+   sysdate,
+   hire_date
+) > 24
+ group by department_id
+ order by avgsalary desc
+ fetch first 1 rows only;
+
 --56.Find employees who work more than 5 months.
-select e.*,round(MONTHS_BETWEEN(to_date('01/01/2018','DD-MM-YYYY'),hire_date)) months from employees e 
-WHERE MONTHS_BETWEEN(to_date('01/01/2018','DD-MM-YYYY'), hire_date) > 5;
+select e.*,
+       round(months_between(
+          to_date('01/01/2018',
+                      'DD-MM-YYYY'),
+          hire_date
+       )) months
+  from employees e
+ where months_between(
+   to_date('01/01/2018',
+               'DD-MM-YYYY'),
+   hire_date
+) > 5;
+
 --56.Write a query to display each employee’s name along with their manager’s name. If an employee does not have a manager, display "no manager" instead.(Use employees table)
-select e.first_name employees,nvl2(m.first_name,m.first_name,'No manager') managers from employees e left join employees m on e.MANAGER_ID=m.employee_id;
+select e.first_name employees,
+       nvl2(
+          m.first_name,
+          m.first_name,
+          'No manager'
+       ) managers
+  from employees e
+  left join employees m
+on e.manager_id = m.employee_id;
+-------------------------------------
+--Linkedin
+---------------------------------------
+CREATE TABLE EmployeeDetails (
+ EmpId INT,
+ FullName VARCHAR(255),
+ ManagerId INT,
+ DateOfJoining DATE,
+ City VARCHAR(255)
+);
+
+CREATE TABLE EmployeeSalary (
+ EmpId INT,
+ Project VARCHAR(255),
+ Salary INT,
+ Variables INT
+);
+ INSERT INTO EmployeeDetails (EmpId, FullName, ManagerId, DateOfJoining, City)
+VALUES (1, 'John Smith', NULL, TO_DATE('15-03-2023', 'DD-MM-YYYY'), 'New York');
+INSERT INTO EmployeeDetails (EmpId, FullName, ManagerId, DateOfJoining, City)
+VALUES (4, 'Jane Doe', 1, TO_DATE('10-07-2019', 'DD-MM-YYYY'), 'Los Angeles');
+INSERT INTO EmployeeDetails (EmpId, FullName, ManagerId, DateOfJoining, City)
+VALUES (6, 'Michael Johnson', 1, TO_DATE('20-01-2021', 'DD-MM-YYYY'), 'Chicago');
+INSERT INTO EmployeeDetails (EmpId, FullName, ManagerId, DateOfJoining, City)
+VALUES (8, 'Emily Williams', 2, TO_DATE('05-11-2018', 'DD-MM-YYYY'), 'Houston');
+INSERT INTO EmployeeDetails (EmpId, FullName, ManagerId, DateOfJoining, City)
+VALUES (9, 'David Brown', 3, TO_DATE('18-02-2022', 'DD-MM-YYYY'), 'Miami');
+INSERT INTO EmployeeDetails (EmpId, FullName, ManagerId, DateOfJoining, City)
+VALUES (10, 'Sarah Wilson', 2, TO_DATE('30-04-2023', 'DD-MM-YYYY'), 'New York');
+INSERT INTO EmployeeDetails (EmpId, FullName, ManagerId, DateOfJoining, City)
+VALUES (20, 'Robert Lee', 3, TO_DATE('12-09-2017', 'DD-MM-YYYY'), 'Seattle');
+INSERT INTO EmployeeDetails (EmpId, FullName, ManagerId, DateOfJoining, City)
+VALUES (100, 'Olivia Martinez', NULL, TO_DATE('03-08-2022', 'DD-MM-YYYY'), 'Boston');
+INSERT INTO EmployeeDetails (EmpId, FullName, ManagerId, DateOfJoining, City)
+VALUES (120, 'Daniel Taylor', 7, TO_DATE('25-06-2020', 'DD-MM-YYYY'), 'New York');
+INSERT INTO EmployeeDetails (EmpId, FullName, ManagerId, DateOfJoining, City)
+VALUES (2, 'Sophia Anderson', 8, TO_DATE('08-04-2019', 'DD-MM-YYYY'), 'New York');
+commit;
+INSERT INTO EmployeeSalary (EmpId, Project, Salary, Variables)
+VALUES (1, 'Project A', 60000, 5000);
+INSERT INTO EmployeeSalary (EmpId, Project, Salary, Variables)
+VALUES (2, 'Project B', 75000, 6000);
+INSERT INTO EmployeeSalary (EmpId, Project, Salary, Variables)
+VALUES (3, 'Project A', 80000, 7000);
+INSERT INTO EmployeeSalary (EmpId, Project, Salary, Variables)
+VALUES (4, 'Project C', 55000, 4000);
+INSERT INTO EmployeeSalary (EmpId, Project, Salary, Variables)
+VALUES (5, 'Project B', 65000, 5500);
+INSERT INTO EmployeeSalary (EmpId, Project, Salary, Variables)
+VALUES (6, 'Project C', 70000, 6000);
+INSERT INTO EmployeeSalary (EmpId, Project, Salary, Variables)
+VALUES (7, 'Project A', 72000, 5500);
+INSERT INTO EmployeeSalary (EmpId, Project, Salary, Variables)
+VALUES (8, 'Project D', 68000, 5000);
+INSERT INTO EmployeeSalary (EmpId, Project, Salary, Variables)
+VALUES (9, 'Project B', 60000, 4500);
+INSERT INTO EmployeeSalary (EmpId, Project, Salary, Variables)
+VALUES (10, 'Project C', 62000, 4800);
+
+
+select * from EmployeeDetails order by empid;
+select * from EmployeeSalary;
+
+update employeedetails set dateofjoining='15-03-2020' where empid=1;
+commit;
+
+--57.Write a query to display both the EmpId and ManagerId together.
+select empid,managerid from employeedetails order by empid;
+
+--58.Write a query to display all employee details from the EmployeeDetails table, only for those employees who joined in the year 2020.
+select * from employeedetails where to_char(DateOfJoining,'YYYY')=2020;
+select * from employeedetails where extract(year from dateofjoining)=2020;
+
+--59.Write a query to display all those employees who work on a project other than 'Project A'.
+select * from EMPLOYEEDETAILS e1 join EMPLOYEESALARY e2 on e1.empid=e2.empid where e2.PROJECT<>'Project A';
+
+--60.Write a query to display all employee records from the EmployeeDetails table, only for those employees who also have a salary record in the EmployeeSalary table.
+select * from EMPLOYEEDETAILS e1 left join EMPLOYEESALARY e2 on e1.empid=e2.empid where e2.SALARY is not null;
+
+--61.Display the employee details even if a salary record is not present for the employee.
+select fullname,salary from EMPLOYEEDETAILS e1 left join EMPLOYEESALARY e2 on e1.empid=e2.empid;
+
+-- Create the students table
+CREATE TABLE students (
+    student_id NUMBER PRIMARY KEY,
+    student_name VARCHAR2(50),
+    marks NUMBER(3)
+);
+
+-- Insert 100 sample records
+INSERT INTO students (student_id, student_name, marks) VALUES (1, 'John Smith', 85);
+INSERT INTO students (student_id, student_name, marks) VALUES (2, 'Emma Johnson', 92);
+INSERT INTO students (student_id, student_name, marks) VALUES (3, 'Michael Brown', 78);
+INSERT INTO students (student_id, student_name, marks) VALUES (4, 'Sarah Davis', 45);
+INSERT INTO students (student_id, student_name, marks) VALUES (5, 'David Wilson', 67);
+INSERT INTO students (student_id, student_name, marks) VALUES (6, 'Jennifer Miller', 88);
+INSERT INTO students (student_id, student_name, marks) VALUES (7, 'Christopher Lee', 34);
+INSERT INTO students (student_id, student_name, marks) VALUES (8, 'Amanda Taylor', 91);
+INSERT INTO students (student_id, student_name, marks) VALUES (9, 'James Anderson', 56);
+INSERT INTO students (student_id, student_name, marks) VALUES (10, 'Jessica Thomas', 72);
+INSERT INTO students (student_id, student_name, marks) VALUES (11, 'Daniel Martin', 83);
+INSERT INTO students (student_id, student_name, marks) VALUES (12, 'Elizabeth White', 49);
+INSERT INTO students (student_id, student_name, marks) VALUES (13, 'Matthew Harris', 61);
+INSERT INTO students (student_id, student_name, marks) VALUES (14, 'Lauren Clark', 95);
+INSERT INTO students (student_id, student_name, marks) VALUES (15, 'Andrew Lewis', 38);
+INSERT INTO students (student_id, student_name, marks) VALUES (16, 'Megan Walker', 87);
+INSERT INTO students (student_id, student_name, marks) VALUES (17, 'Joshua Hall', 52);
+INSERT INTO students (student_id, student_name, marks) VALUES (18, 'Olivia Allen', 79);
+INSERT INTO students (student_id, student_name, marks) VALUES (19, 'Kevin Young', 66);
+INSERT INTO students (student_id, student_name, marks) VALUES (20, 'Sophia King', 93);
+INSERT INTO students (student_id, student_name, marks) VALUES (21, 'Brian Wright', 44);
+INSERT INTO students (student_id, student_name, marks) VALUES (22, 'Nicole Scott', 58);
+INSERT INTO students (student_id, student_name, marks) VALUES (23, 'Jason Green', 71);
+INSERT INTO students (student_id, student_name, marks) VALUES (24, 'Victoria Baker', 84);
+INSERT INTO students (student_id, student_name, marks) VALUES (25, 'Eric Adams', 37);
+INSERT INTO students (student_id, student_name, marks) VALUES (26, 'Rachel Nelson', 89);
+INSERT INTO students (student_id, student_name, marks) VALUES (27, 'Steven Carter', 63);
+INSERT INTO students (student_id, student_name, marks) VALUES (28, 'Hannah Mitchell', 76);
+INSERT INTO students (student_id, student_name, marks) VALUES (29, 'Timothy Perez', 51);
+INSERT INTO students (student_id, student_name, marks) VALUES (30, 'Samantha Roberts', 94);
+INSERT INTO students (student_id, student_name, marks) VALUES (31, 'Benjamin Turner', 68);
+INSERT INTO students (student_id, student_name, marks) VALUES (32, 'Grace Phillips', 42);
+INSERT INTO students (student_id, student_name, marks) VALUES (33, 'Patrick Campbell', 77);
+INSERT INTO students (student_id, student_name, marks) VALUES (34, 'Alexis Parker', 59);
+INSERT INTO students (student_id, student_name, marks) VALUES (35, 'Nathan Evans', 86);
+INSERT INTO students (student_id, student_name, marks) VALUES (36, 'Katherine Edwards', 47);
+INSERT INTO students (student_id, student_name, marks) VALUES (37, 'Samuel Collins', 73);
+INSERT INTO students (student_id, student_name, marks) VALUES (38, 'Madison Stewart', 81);
+INSERT INTO students (student_id, student_name, marks) VALUES (39, 'Dylan Sanchez', 55);
+INSERT INTO students (student_id, student_name, marks) VALUES (40, 'Brittany Morris', 90);
+INSERT INTO students (student_id, student_name, marks) VALUES (41, 'Jordan Rogers', 64);
+INSERT INTO students (student_id, student_name, marks) VALUES (42, 'Taylor Reed', 39);
+INSERT INTO students (student_id, student_name, marks) VALUES (43, 'Caleb Cook', 75);
+INSERT INTO students (student_id, student_name, marks) VALUES (44, 'Morgan Morgan', 53);
+INSERT INTO students (student_id, student_name, marks) VALUES (45, 'Austin Bell', 82);
+INSERT INTO students (student_id, student_name, marks) VALUES (46, 'Sydney Murphy', 48);
+INSERT INTO students (student_id, student_name, marks) VALUES (47, 'Ethan Bailey', 69);
+INSERT INTO students (student_id, student_name, marks) VALUES (48, 'Allison Rivera', 74);
+INSERT INTO students (student_id, student_name, marks) VALUES (49, 'Cameron Cooper', 57);
+INSERT INTO students (student_id, student_name, marks) VALUES (50, 'Haley Richardson', 96);
+INSERT INTO students (student_id, student_name, marks) VALUES (51, 'Lucas Cox', 41);
+INSERT INTO students (student_id, student_name, marks) VALUES (52, 'Jasmine Howard', 70);
+INSERT INTO students (student_id, student_name, marks) VALUES (53, 'Sean Ward', 80);
+INSERT INTO students (student_id, student_name, marks) VALUES (54, 'Maria Torres', 54);
+INSERT INTO students (student_id, student_name, marks) VALUES (55, 'Adam Peterson', 65);
+INSERT INTO students (student_id, student_name, marks) VALUES (56, 'Rebecca Gray', 43);
+INSERT INTO students (student_id, student_name, marks) VALUES (57, 'Jack Ramirez', 78);
+INSERT INTO students (student_id, student_name, marks) VALUES (58, 'Vanessa James', 91);
+INSERT INTO students (student_id, student_name, marks) VALUES (59, 'Luke Watson', 60);
+INSERT INTO students (student_id, student_name, marks) VALUES (60, 'Paige Brooks', 85);
+INSERT INTO students (student_id, student_name, marks) VALUES (61, 'Owen Kelly', 46);
+INSERT INTO students (student_id, student_name, marks) VALUES (62, 'Jenna Sanders', 72);
+INSERT INTO students (student_id, student_name, marks) VALUES (63, 'Cody Price', 83);
+INSERT INTO students (student_id, student_name, marks) VALUES (64, 'Miranda Bennett', 58);
+INSERT INTO students (student_id, student_name, marks) VALUES (65, 'Devin Wood', 67);
+INSERT INTO students (student_id, student_name, marks) VALUES (66, 'Sabrina Barnes', 40);
+INSERT INTO students (student_id, student_name, marks) VALUES (67, 'Trevor Ross', 76);
+INSERT INTO students (student_id, student_name, marks) VALUES (68, 'Crystal Henderson', 89);
+INSERT INTO students (student_id, student_name, marks) VALUES (69, 'Brett Coleman', 62);
+INSERT INTO students (student_id, student_name, marks) VALUES (70, 'Erica Jenkins', 94);
+INSERT INTO students (student_id, student_name, marks) VALUES (71, 'Marcus Perry', 50);
+INSERT INTO students (student_id, student_name, marks) VALUES (72, 'Monica Powell', 79);
+INSERT INTO students (student_id, student_name, marks) VALUES (73, 'Jeremy Long', 71);
+INSERT INTO students (student_id, student_name, marks) VALUES (74, 'Heather Flores', 86);
+INSERT INTO students (student_id, student_name, marks) VALUES (75, 'Colin Washington', 59);
+INSERT INTO students (student_id, student_name, marks) VALUES (76, 'Kelsey Butler', 45);
+INSERT INTO students (student_id, student_name, marks) VALUES (77, 'Garrett Simmons', 68);
+INSERT INTO students (student_id, student_name, marks) VALUES (78, 'Alexandra Foster', 82);
+INSERT INTO students (student_id, student_name, marks) VALUES (79, 'Logan Gonzales', 55);
+INSERT INTO students (student_id, student_name, marks) VALUES (80, 'Mikayla Bryant', 90);
+INSERT INTO students (student_id, student_name, marks) VALUES (81, 'Seth Alexander', 63);
+INSERT INTO students (student_id, student_name, marks) VALUES (82, 'Gabrielle Russell', 77);
+INSERT INTO students (student_id, student_name, marks) VALUES (83, 'Derek Griffin', 49);
+INSERT INTO students (student_id, student_name, marks) VALUES (84, 'Cassidy Diaz', 84);
+INSERT INTO students (student_id, student_name, marks) VALUES (85, 'Corey Hayes', 61);
+INSERT INTO students (student_id, student_name, marks) VALUES (86, 'Bethany Myers', 73);
+INSERT INTO students (student_id, student_name, marks) VALUES (87, 'Parker Ford', 52);
+INSERT INTO students (student_id, student_name, marks) VALUES (88, 'Summer Hamilton', 88);
+INSERT INTO students (student_id, student_name, marks) VALUES (89, 'Joel Graham', 66);
+INSERT INTO students (student_id, student_name, marks) VALUES (90, 'Jillian Sullivan', 95);
+INSERT INTO students (student_id, student_name, marks) VALUES (91, 'Shane Wallace', 44);
+INSERT INTO students (student_id, student_name, marks) VALUES (92, 'Angelina Lane', 70);
+INSERT INTO students (student_id, student_name, marks) VALUES (93, 'Brendan Alvarez', 81);
+INSERT INTO students (student_id, student_name, marks) VALUES (94, 'Carly George', 56);
+INSERT INTO students (student_id, student_name, marks) VALUES (95, 'Tanner Andrews', 69);
+INSERT INTO students (student_id, student_name, marks) VALUES (96, 'Lydia West', 92);
+INSERT INTO students (student_id, student_name, marks) VALUES (97, 'Jared Knight', 47);
+INSERT INTO students (student_id, student_name, marks) VALUES (98, 'Holly Owens', 74);
+INSERT INTO students (student_id, student_name, marks) VALUES (99, 'Riley Reynolds', 60);
+INSERT INTO students (student_id, student_name, marks) VALUES (100, 'Claire Fisher', 87);
+COMMIT;
+
+--62. Query to fetch total marks for a student and average marks for only passed students (passing mark = 40)
+select student_name,sum(marks) total_marks,avg(marks) average_marks
+from students 
+group by student_name 
+having min(marks)>=40;
+
+--cross question will be asked why you will use having over where?
+/*Because Having filters after aggrigation and where filters before aggrigation*/
+
+--63.EmpId Name Salary 
+/*      1     E1   1000 
+      2     E2   2000 
+      3     E3   3000 
+      4     E4   4000 
+      5     E5   NULL */
+--What happens if we query with WHERE salary != 3000?
+select * from emp where salary<>3000; --o/p:3 rows 
+--Explanation:The row with NULL salary will be excluded.Because NULL != 3000 returns UNKNOWN, not TRUE — and WHERE only returns rows where the condition is TRUE.
+
+--64.For each employee, find the gaps between employment periods.
+-- Create employment_history table with 3 columns
+CREATE TABLE employment_history (
+    emp_id NUMBER NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE
+);
+-- Insert 20 sample records
+INSERT INTO employment_history VALUES (101, TO_DATE('2020-01-15', 'YYYY-MM-DD'), TO_DATE('2022-03-20', 'YYYY-MM-DD'));
+INSERT INTO employment_history VALUES (102, TO_DATE('2019-06-10', 'YYYY-MM-DD'), TO_DATE('2021-12-31', 'YYYY-MM-DD'));
+INSERT INTO employment_history VALUES (103, TO_DATE('2021-03-01', 'YYYY-MM-DD'), NULL);
+INSERT INTO employment_history VALUES (104, TO_DATE('2018-11-05', 'YYYY-MM-DD'), TO_DATE('2020-06-15', 'YYYY-MM-DD'));
+INSERT INTO employment_history VALUES (105, TO_DATE('2022-08-15', 'YYYY-MM-DD'), NULL);
+INSERT INTO employment_history VALUES (106, TO_DATE('2017-09-01', 'YYYY-MM-DD'), TO_DATE('2019-04-30', 'YYYY-MM-DD'));
+INSERT INTO employment_history VALUES (107, TO_DATE('2020-02-10', 'YYYY-MM-DD'), TO_DATE('2022-05-15', 'YYYY-MM-DD'));
+INSERT INTO employment_history VALUES (108, TO_DATE('2019-04-01', 'YYYY-MM-DD'), NULL);
+INSERT INTO employment_history VALUES (109, TO_DATE('2021-11-15', 'YYYY-MM-DD'), TO_DATE('2023-03-20', 'YYYY-MM-DD'));
+INSERT INTO employment_history VALUES (110, TO_DATE('2022-01-05', 'YYYY-MM-DD'), NULL);
+INSERT INTO employment_history VALUES (111, TO_DATE('2020-09-20', 'YYYY-MM-DD'), TO_DATE('2023-01-10', 'YYYY-MM-DD'));
+INSERT INTO employment_history VALUES (112, TO_DATE('2021-12-01', 'YYYY-MM-DD'), NULL);
+INSERT INTO employment_history VALUES (113, TO_DATE('2018-03-15', 'YYYY-MM-DD'), TO_DATE('2020-08-30', 'YYYY-MM-DD'));
+INSERT INTO employment_history VALUES (114, TO_DATE('2023-02-14', 'YYYY-MM-DD'), NULL);
+INSERT INTO employment_history VALUES (115, TO_DATE('2019-07-22', 'YYYY-MM-DD'), TO_DATE('2022-11-05', 'YYYY-MM-DD'));
+INSERT INTO employment_history VALUES (116, TO_DATE('2020-05-30', 'YYYY-MM-DD'), NULL);
+INSERT INTO employment_history VALUES (117, TO_DATE('2021-08-12', 'YYYY-MM-DD'), TO_DATE('2023-06-25', 'YYYY-MM-DD'));
+INSERT INTO employment_history VALUES (118, TO_DATE('2022-10-08', 'YYYY-MM-DD'), NULL);
+INSERT INTO employment_history VALUES (119, TO_DATE('2018-12-03', 'YYYY-MM-DD'), TO_DATE('2021-04-18', 'YYYY-MM-DD'));
+INSERT INTO employment_history VALUES (120, TO_DATE('2023-03-27', 'YYYY-MM-DD'), NULL);
+COMMIT;
+
+SELECT emp_id,decode(TO_DATE(end_date) - TO_DATE(start_date),null,'Continuing',TO_DATE(end_date) - TO_DATE(start_date)) AS DateDiff
+FROM   employment_history;
+
+--65.Requirement: Get emp_id, dept_id, and dept_name, even if some employees don’t belong to a department.
+select e.employee_id,e.department_id,d.DEPARTMENT_ID,d.department_name
+from employees e left join departments d on e.department_id=d.department_id;
+--Cross question “How would it behave with RIGHT, INNER, and FULL OUTER JOIN?”
+/*
+inner join: Only having department employees will come.
+Right join: Matching departments from both of the table and unmatch record from department table will show.
+full  join: Both match and unmatch records will show from both of the table.
+*/
+
+--66.Find out avg salary department wise using inline view and lateral
+select d.department_id,departments.department_name,avg_salary 
+from departments,lateral (select department_id,trunc(avg(salary)) avg_salary from employees where departments.DEPARTMENT_ID=department_id group by department_id)d;
+
+--67. Fetch employees and their manager name without using self join or left join.
+--Self join
+select e.employee_id employees_id,
+       e.first_name  employees_name,
+       m.employee_id managers_id,
+       m.first_name managers_name
+from employees e,employees m where e.manager_id=m.employee_id order by e.employee_id;
+
+--left join
+select e.employee_id employees_id,
+       e.first_name  employees_name,
+       m.employee_id managers_id,
+       m.first_name managers_name
+from employees e left join employees m on e.manager_id=m.employee_id order by e.employee_id;
+
+
 
