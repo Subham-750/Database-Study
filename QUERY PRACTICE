@@ -3,6 +3,11 @@
 select distinct salary from employees order by salary desc offset 1 rows fetch next 1 rows only;
 select max(salary) from employees where salary < (select max(salary) from employees);
 select salary from(select salary,ROW_NUMBER() over (order by salary desc) rn from employees group by salary) where rn=2;
+--using corelated subquery
+select max(salary) from employees e where 1=(select count(distinct salary) 
+from employees f where f.SALARY >any e.SALARY) order by salary desc;
+
+
 
 --Q2.Display the highest paid employees from each department.
 select max(salary) highest_paid_employees,
@@ -963,7 +968,8 @@ select e.employee_id employees_id,
        e.first_name  employees_name,
        m.employee_id managers_id,
        m.first_name managers_name
-from employees e,employees m where e.manager_id=m.employee_id order by e.employee_id;
+from employees e,employees m where e.manager_id=m.employee_id 
+order by e.employee_id;
 
 --left join
 select e.employee_id employees_id,
@@ -972,5 +978,88 @@ select e.employee_id employees_id,
        m.first_name managers_name
 from employees e left join employees m on e.manager_id=m.employee_id order by e.employee_id;
 
+--Using hierarchial query 
+select employee_id,first_name employee_name, prior first_name manager_name,prior EMPLOYEE_ID
+from employees e 
+start with manager_id is null
+connect by prior employee_id=manager_id order by employee_id;
 
+/*68. Suppose i have records like table_a
+id     |   name
+   1       a,b,c
+   2       d,e,f 
+o/p: I want 
 
+id  | result
+1       a
+1       b
+1       c
+2       d
+2       e
+2       f
+*/
+--method=>1
+select id, regexp_substr(name,'\w',1,l) result from table_a,
+(select level l from dual connect by level<=(select max(regexp_count(name,',')+1) from table_a));
+--method=>2
+select id,regexp_substr(name,'\w',1,l) from table_a,lateral(
+select level l from table_a connect by level<=regexp_count(name,',')+1);
+
+--reverse
+select id,listagg(namein,',')from (
+(select id,regexp_substr(name,'\w',1,l) namein from test_data,lateral(select level l from dual connect by level<=regexp_count(name,',')))) group by id;
+
+/*68. Suppose i have records like table_b
+id  | name
+1       a
+1       b
+1       c
+2       d
+2       e
+2       f
+o/p: I want 
+id     |   result
+   1       a,b,c
+   2       d,e,f 
+*/
+select id,listagg(name,',') within group (order by id) from table_b group by id;
+
+/*69.Practical question suppose i want output like: CUM_SUM(if tx_type D then + else -)  Then what is the cumulative approach.
+TX_NO | TX_DATE        | ACCT_NUMBER             | AMOUNT | TX_TYPE   | CUM_SUM
+------------------------------------------------------------------------------
+6     |  01-FEB-19     | 222233334444455555      | 100    | D         | -100 
+7     |  02-FEB-19     | 222233334444455555      | 20     | C         | -80
+8     |  03-FEB-19     | 222233334444455555      | 10     | D         | -90
+9     |  04-FEB-19     | 222233334444455555      | 30     | C         | -60
+10    |  05-FEB-19     | 222233334444455555      | 20     | C         | -40
+1     |  01-FEB-19     | 9999888877776666        | 100    | D         | -100
+2     |  02-FEB-19     | 9999888877776666        | 300    | C         | 200
+3     |  03-FEB-19     | 9999888877776666        | 100    | D         | 100
+4     |  04-FEB-19     | 9999888877776666        | 400    | C         | 500
+5     |  05-FEB-19     | 9999888877776666        | 200    | C         | 700
+*/
+--Step1: first i need to assign negetive(-) to debit and positive (+) to credit
+select t.*,decode(TX_TYPE,'D',AMOUNT*-1,AMOUNT)cum_amt from transactions t;
+--Step2: Then we need to perform addition and substraction to the ammounts as per tx_date.
+select sum(decode(TX_TYPE,'D',AMOUNT*-1,AMOUNT)) over (partition by ACCT_NUMBER order by TX_DATE) cum_amt from transactions t;
+
+/*70.Write an SQL query to calculate the year-over-year salary increase percentage for each employee based on their salary history.
+| id | name | sal  | year | deptid |
+| -- | ---- | ---- | ---- | ------ |
+| 1  | ram  | 1000 | 2023 | 100    |
+| 1  | ram  | 1100 | 2024 | 100    |
+| 1  | ram  | 1300 | 2025 | 100    |
+| 2  | sai  | 1500 | 2023 | 200    |
+| 2  | sai  | 1800 | 2024 | 200    |
+| 2  | sai  | 2000 | 2025 | 200    |
+| 3  | syam | 2500 | 2023 | 300    |
+| 3  | syam | 2700 | 2024 | 300    |
+| 3  | syam | 2900 | 2025 | 300    |
+*/
+select id,
+    name,
+    year,
+    sal,
+    round(
+    (sal-lag(sal) OVER (PARTITION BY id ORDER BY year))/(LAG(sal) OVER (PARTITION BY id ORDER BY year)) * 100,2)
+FROM emp_salary
