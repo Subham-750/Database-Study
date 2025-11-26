@@ -1055,6 +1055,18 @@ select sum(decode(TX_TYPE,'D',AMOUNT*-1,AMOUNT)) over (partition by ACCT_NUMBER 
 | 3  | syam | 2500 | 2023 | 300    |
 | 3  | syam | 2700 | 2024 | 300    |
 | 3  | syam | 2900 | 2025 | 300    |
+
+o/p:=
+ID   NAME   YEAR   SAL   SAL_INCREASE_PERCENT
+1    ram    2023   1000   (null)
+1    ram    2024   1100   10
+1    ram    2025   1300   18.18
+2    sai    2023   1500   (null)
+2    sai    2024   1800   20
+2    sai    2025   2000   11.11
+3    syam   2023   2500   (null)
+3    syam   2024   2700   8
+3    syam   2025   2900   7.41
 */
 select id,
     name,
